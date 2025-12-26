@@ -1,0 +1,8 @@
+
+{
+  "name": "Student Expense Tracker",
+  "description": "A comprehensive personal finance dashboard for students featuring real-time tracking, AI-powered budget insights, and sleek data visualizations.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
