@@ -3,8 +3,8 @@ import { Category, Expense } from '../types';
 
 interface ExpenseModalProps {
   onClose: () => void;
-  onSave: (amount: number, category: Category, date: string, note: string) => void;
-  onDelete?: (id: string) => void;
+  onSave: (amount: number, category: Category, date: string, note: string) => void | Promise<void>;
+  onDelete?: (id: string) => void | Promise<void>;
   expense?: Expense | null;
 }
 
@@ -26,6 +26,8 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ onClose, onSave, onDelete, 
   const [note, setNote] = useState<string>(expense?.note || '');
   const [errors, setErrors] = useState<{ amount?: string; date?: string }>({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (expense) {
@@ -57,18 +59,34 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ onClose, onSave, onDelete, 
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
 
-    const numAmount = parseFloat(amount);
-    onSave(numAmount, selectedCategory, date, note);
-    onClose();
+    setIsSaving(true);
+    try {
+      const numAmount = parseFloat(amount);
+      await onSave(numAmount, selectedCategory, date, note);
+      onClose();
+    } catch (error) {
+      console.error('Error saving expense:', error);
+      // Error handling is done in App.tsx via toast
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (expense && onDelete) {
-      onDelete(expense.id);
-      onClose();
+      setIsDeleting(true);
+      try {
+        await onDelete(expense.id);
+        onClose();
+      } catch (error) {
+        console.error('Error deleting expense:', error);
+        // Error handling is done in App.tsx via toast
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -245,10 +263,18 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ onClose, onSave, onDelete, 
               </button>
               <button
                 onClick={handleSave}
+                disabled={isSaving || isDeleting}
                 disabled={!amount || Object.keys(errors).length > 0}
                 className="flex-[2] rounded-xl bg-primary py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/25 hover:bg-blue-600 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isEditMode ? 'Save Changes' : 'Save Expense'}
+                {isSaving ? (
+                  <>
+                    <span className="material-symbols-outlined animate-spin text-sm">sync</span>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  isEditMode ? 'Save Changes' : 'Save Expense'
+                )}
               </button>
             </div>
           </div>
@@ -284,9 +310,17 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ onClose, onSave, onDelete, 
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 py-3 text-sm font-bold text-white transition-colors"
+                  disabled={isSaving || isDeleting}
+                  className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 py-3 text-sm font-bold text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Delete
+                  {isDeleting ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-sm">sync</span>
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    'Delete'
+                  )}
                 </button>
               </div>
             </div>

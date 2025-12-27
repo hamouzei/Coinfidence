@@ -2,15 +2,18 @@
 import React, { useMemo, useState } from 'react';
 import { Expense, Category } from '../types';
 import { formatDate } from '../utils/dateFormatter';
+import LoadingSkeleton from '../components/LoadingSkeleton';
+import EmptyState from '../components/EmptyState';
 
 interface HistoryProps {
   expenses: Expense[];
   onAddExpense: () => void;
   onEditExpense?: (expense: Expense) => void;
   onDeleteExpense?: (id: string) => void;
+  isLoading?: boolean;
 }
 
-const History: React.FC<HistoryProps> = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) => {
+const History: React.FC<HistoryProps> = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense, isLoading = false }) => {
   const [hoveredExpense, setHoveredExpense] = useState<string | null>(null);
 
   const groupedExpenses = useMemo(() => {
@@ -68,7 +71,22 @@ const History: React.FC<HistoryProps> = ({ expenses, onAddExpense, onEditExpense
           <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mt-1">Total spent this month</p>
         </div>
 
-        {groupedExpenses.map(([dateLabel, items]) => (
+        {isLoading ? (
+          <div className="flex flex-col gap-3">
+            <LoadingSkeleton />
+            <LoadingSkeleton />
+            <LoadingSkeleton />
+          </div>
+        ) : groupedExpenses.length === 0 ? (
+          <EmptyState
+            icon="checklist"
+            title="No expenses yet"
+            message="Start tracking today to see your spending history here."
+            actionLabel="Add Your First Expense"
+            onAction={onAddExpense}
+          />
+        ) : (
+          groupedExpenses.map(([dateLabel, items]) => (
           <div key={dateLabel} className="mb-6">
             <div className="sticky top-[110px] z-10 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm py-2 mb-2">
               <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{dateLabel}</h3>
@@ -131,26 +149,7 @@ const History: React.FC<HistoryProps> = ({ expenses, onAddExpense, onEditExpense
               })}
             </div>
           </div>
-        ))}
-
-        {expenses.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="w-32 h-32 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-600">
-                checklist
-              </span>
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No expenses yet</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-6 max-w-sm">
-              Start tracking today to see your spending history here.
-            </p>
-            <button
-              onClick={onAddExpense}
-              className="px-6 py-3 bg-primary hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors shadow-sm"
-            >
-              Add Your First Expense
-            </button>
-          </div>
+        ))
         )}
       </main>
     </div>

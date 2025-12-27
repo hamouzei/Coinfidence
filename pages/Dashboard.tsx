@@ -2,17 +2,20 @@ import React, { useMemo } from "react";
 import { Expense, Category } from "../types";
 import { getCurrentMonthShort } from "../utils/dateFormatter";
 import EmptyState from "../components/EmptyState";
+import LoadingSkeleton from "../components/LoadingSkeleton";
 
 interface DashboardProps {
   expenses: Expense[];
   onAddExpense: () => void;
   userName?: string;
+  isLoading?: boolean;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({
   expenses,
   onAddExpense,
   userName = "Alex",
+  isLoading = false,
 }) => {
   const totalSpent = useMemo(
     () => expenses.reduce((sum, e) => sum + e.amount, 0),
@@ -132,7 +135,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {expenses.length === 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col gap-4">
+          <LoadingSkeleton />
+          <LoadingSkeleton />
+          <LoadingSkeleton />
+        </div>
+      ) : expenses.length === 0 ? (
         <EmptyState
           icon="wallet"
           title="No expenses yet"

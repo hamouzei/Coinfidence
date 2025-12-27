@@ -17,51 +17,7 @@ import Auth from "./pages/Auth";
 import EmailVerification from "./pages/EmailVerification";
 import { Expense, Category, User } from "./types";
 import { authHelpers } from "./services/supabase";
-
-const INITIAL_EXPENSES: Expense[] = [
-  {
-    id: "1",
-    amount: 150.0,
-    category: Category.FOOD,
-    date: "2023-10-24",
-    note: "Dinner with friends",
-  },
-  {
-    id: "2",
-    amount: 120.0,
-    category: Category.TEXTBOOKS,
-    date: "2023-10-23",
-    note: "Calculus textbook",
-  },
-  {
-    id: "3",
-    amount: 60.0,
-    category: Category.TRANSPORT,
-    date: "2023-10-22",
-    note: "Monthly bus pass",
-  },
-  {
-    id: "4",
-    amount: 45.0,
-    category: Category.ENTERTAINMENT,
-    date: "2023-10-21",
-    note: "Movie night",
-  },
-  {
-    id: "5",
-    amount: 4.5,
-    category: Category.FOOD,
-    date: "2023-10-24",
-    note: "Starbucks run",
-  },
-  {
-    id: "6",
-    amount: 2.0,
-    category: Category.TRANSPORT,
-    date: "2023-10-24",
-    note: "Bus fare to campus",
-  },
-];
+import { expenseService } from "./services/expenseService";
 
 interface ToastState {
   message: string;
@@ -69,12 +25,13 @@ interface ToastState {
 }
 
 const AppContent: React.FC = () => {
-  const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingExpenses, setIsLoadingExpenses] = useState(false);
   const location = useLocation();
 
   // Check for existing session on mount
@@ -102,6 +59,8 @@ const AppContent: React.FC = () => {
               "https://ui-avatars.com/api/?name=" +
                 encodeURIComponent(supabaseUser.email?.split("@")[0] || "User"),
           });
+          // Fetch expenses for logged-in user
+          loadExpenses();
         }
       } catch (error) {
         console.error("Error checking session:", error);
@@ -130,8 +89,11 @@ const AppContent: React.FC = () => {
             "https://ui-avatars.com/api/?name=" +
               encodeURIComponent(supabaseUser.email?.split("@")[0] || "User"),
         });
+        // Fetch expenses when user signs in
+        loadExpenses();
       } else if (event === "SIGNED_OUT") {
         setUser(null);
+        setExpenses([]); // Clear expenses on logout
       } else if (event === "TOKEN_REFRESHED" && session?.user) {
         // Session refreshed, user still logged in
         const supabaseUser = session.user;
@@ -155,49 +117,95 @@ const AppContent: React.FC = () => {
     };
   }, []);
 
+  // Load expenses from Supabase
+  const loadExpenses = async () => {
+    if (!user) return;
+    
+    setIsLoadingExpenses(true);
+    try {
+      const fetchedExpenses = await expenseService.fetchExpenses();
+      setExpenses(fetchedExpenses);
+    } catch (error: any) {
+      console.error("Error loading expenses:", error);
+      showToast(
+        error.message || "Failed to load expenses. Please try again.",
+        "error"
+      );
+    } finally {
+      setIsLoadingExpenses(false);
+    }
+  };
+
   const showToast = (message: string, type: ToastType) => {
     setToast({ message, type });
   };
 
-  const handleAddExpense = (
+  const handleAddExpense = async (
     amount: number,
     category: Category,
     date: string,
     note: string
   ) => {
-    const newExpense: Expense = {
-      id: Math.random().toString(36).substr(2, 9),
-      amount,
-      category,
-      date,
-      note,
-    };
-    setExpenses((prev) => [newExpense, ...prev]);
-    showToast("Expense added successfully", "success");
-  };
-
-  const handleEditExpense = (
-    amount: number,
-    category: Category,
-    date: string,
-    note: string
-  ) => {
-    if (editingExpense) {
-      setExpenses((prev) =>
-        prev.map((exp) =>
-          exp.id === editingExpense.id
-            ? { ...exp, amount, category, date, note }
-            : exp
-        )
+    try {
+      const newExpense = await expenseService.addExpense(
+        amount,
+        category,
+        date,
+        note
       );
-      showToast("Expense updated successfully", "success");
-      setEditingExpense(null);
+      setExpenses((prev) => [newExpense, ...prev]);
+      showToast("Expense added successfully", "success");
+    } catch (error: any) {
+      console.error("Error adding expense:", error);
+      showToast(
+        error.message || "Failed to add expense. Please try again.",
+        "error"
+      );
     }
   };
 
-  const handleDeleteExpense = (id: string) => {
-    setExpenses((prev) => prev.filter((exp) => exp.id !== id));
-    showToast("Expense deleted successfully", "success");
+  const handleEditExpense = async (
+    amount: number,
+    category: Category,
+    date: string,
+    note: string
+  ) => {
+    if (!editingExpense) return;
+
+    try {
+      const updatedExpense = await expenseService.updateExpense(
+        editingExpense.id,
+        amount,
+        category,
+        date,
+        note
+      );
+      setExpenses((prev) =>
+        prev.map((exp) => (exp.id === editingExpense.id ? updatedExpense : exp))
+      );
+      showToast("Expense updated successfully", "success");
+      setEditingExpense(null);
+    } catch (error: any) {
+      console.error("Error updating expense:", error);
+      showToast(
+        error.message || "Failed to update expense. Please try again.",
+        "error"
+      );
+    }
+  };
+
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      await expenseService.deleteExpense(id);
+      setExpenses((prev) => prev.filter((exp) => exp.id !== id));
+      showToast("Expense deleted successfully", "success");
+    } catch (error: any) {
+      console.error("Error deleting expense:", error);
+      showToast(
+        error.message || "Failed to delete expense. Please try again.",
+        "error"
+      );
+    }
   };
 
   const handleLogin = async (userData: {
@@ -214,6 +222,8 @@ const AppContent: React.FC = () => {
       )}`,
     });
     showToast("Welcome back!", "success");
+    // Load expenses after login
+    loadExpenses();
   };
 
   const handleLogout = async () => {
@@ -302,6 +312,7 @@ const AppContent: React.FC = () => {
                   expenses={expenses}
                   onAddExpense={openAddModal}
                   userName={user.name}
+                  isLoading={isLoadingExpenses}
                 />
               }
             />
@@ -313,6 +324,7 @@ const AppContent: React.FC = () => {
                   onAddExpense={openAddModal}
                   onEditExpense={openEditModal}
                   onDeleteExpense={handleDeleteExpense}
+                  isLoading={isLoadingExpenses}
                 />
               }
             />
