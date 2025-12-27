@@ -9,6 +9,7 @@ interface DashboardProps {
   onAddExpense: () => void;
   userName?: string;
   isLoading?: boolean;
+  monthlyBudget?: number;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({
@@ -16,12 +17,13 @@ const Dashboard: React.FC<DashboardProps> = ({
   onAddExpense,
   userName = "Alex",
   isLoading = false,
+  monthlyBudget = 600, // Default fallback
 }) => {
   const totalSpent = useMemo(
     () => expenses.reduce((sum, e) => sum + e.amount, 0),
     [expenses]
   );
-  const budgetLimit = 600;
+  const budgetLimit = monthlyBudget;
   const budgetPercentage = Math.min(
     Math.round((totalSpent / budgetLimit) * 100),
     100

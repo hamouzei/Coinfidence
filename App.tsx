@@ -18,6 +18,7 @@ import EmailVerification from "./pages/EmailVerification";
 import { Expense, Category, User } from "./types";
 import { authHelpers } from "./services/supabase";
 import { expenseService } from "./services/expenseService";
+import { userSettingsService } from "./services/userSettingsService";
 
 interface ToastState {
   message: string;
@@ -32,6 +33,7 @@ const AppContent: React.FC = () => {
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(false);
+  const [monthlyBudget, setMonthlyBudget] = useState<number>(600);
   const location = useLocation();
 
   // Check for existing session on mount
@@ -59,8 +61,9 @@ const AppContent: React.FC = () => {
               "https://ui-avatars.com/api/?name=" +
                 encodeURIComponent(supabaseUser.email?.split("@")[0] || "User"),
           });
-          // Fetch expenses for logged-in user
+          // Fetch expenses and settings for logged-in user
           loadExpenses();
+          loadUserSettings();
         }
       } catch (error) {
         console.error("Error checking session:", error);
@@ -89,8 +92,9 @@ const AppContent: React.FC = () => {
             "https://ui-avatars.com/api/?name=" +
               encodeURIComponent(supabaseUser.email?.split("@")[0] || "User"),
         });
-        // Fetch expenses when user signs in
+        // Fetch expenses and settings when user signs in
         loadExpenses();
+        loadUserSettings();
       } else if (event === "SIGNED_OUT") {
         setUser(null);
         setExpenses([]); // Clear expenses on logout
@@ -116,6 +120,21 @@ const AppContent: React.FC = () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Load user settings (budget)
+  const loadUserSettings = async () => {
+    try {
+      const settings = await userSettingsService.getSettings();
+      setMonthlyBudget(settings.monthly_budget);
+      if (user) {
+        setUser({ ...user, monthlyBudget: settings.monthly_budget });
+      }
+    } catch (error: any) {
+      console.error("Error loading user settings:", error);
+      // Use default budget if settings can't be loaded
+      setMonthlyBudget(600);
+    }
+  };
 
   // Load expenses from Supabase
   const loadExpenses = async () => {
@@ -222,8 +241,9 @@ const AppContent: React.FC = () => {
       )}`,
     });
     showToast("Welcome back!", "success");
-    // Load expenses after login
+    // Load expenses and settings after login
     loadExpenses();
+    loadUserSettings();
   };
 
   const handleLogout = async () => {
@@ -313,6 +333,7 @@ const AppContent: React.FC = () => {
                   onAddExpense={openAddModal}
                   userName={user.name}
                   isLoading={isLoadingExpenses}
+                  monthlyBudget={monthlyBudget}
                 />
               }
             />
@@ -330,7 +351,17 @@ const AppContent: React.FC = () => {
             />
             <Route
               path="/profile"
-              element={<Profile user={user} onLogout={handleLogout} />}
+              element={
+                <Profile
+                  user={user}
+                  onLogout={handleLogout}
+                  onBudgetUpdate={(budget) => {
+                    setMonthlyBudget(budget);
+                    setUser({ ...user, monthlyBudget: budget });
+                    showToast("Budget updated successfully", "success");
+                  }}
+                />
+              }
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

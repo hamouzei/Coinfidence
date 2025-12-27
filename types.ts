@@ -25,4 +25,5 @@ export interface User {
   email: string;
   plan: string;
   avatar: string;
+  monthlyBudget?: number; // Optional, will be loaded from user_settings
 }
