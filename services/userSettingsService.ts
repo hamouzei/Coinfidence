@@ -23,7 +23,8 @@ export const userSettingsService = {
       });
 
       if (error) {
-        // If function doesn't exist, try direct query
+        console.log('RPC function error, trying direct query:', error.message);
+        // If function doesn't exist or fails, try direct query
         const { data: directData, error: directError } = await supabase
           .from('user_settings')
           .select('*')
@@ -31,8 +32,10 @@ export const userSettingsService = {
           .single();
 
         if (directError) {
-          // If no settings exist, create default
+          console.log('Direct query error:', directError.code, directError.message);
+          // If no settings exist (PGRST116 = no rows returned), create default
           if (directError.code === 'PGRST116') {
+            console.log('No settings found, creating default...');
             const { data: newData, error: createError } = await supabase
               .from('user_settings')
               .insert({
@@ -43,9 +46,20 @@ export const userSettingsService = {
               .single();
 
             if (createError) {
+              console.error('Error creating settings:', createError);
+              // If table doesn't exist, return default without saving
+              if (createError.code === '42P01' || createError.message?.includes('does not exist')) {
+                console.warn('user_settings table does not exist. Please run database/user_settings.sql');
+                return {
+                  id: 'temp',
+                  user_id: user.id,
+                  monthly_budget: 600.00,
+                };
+              }
               throw createError;
             }
 
+            console.log('✅ Created default settings:', newData);
             return {
               id: newData.id,
               user_id: newData.user_id,
@@ -54,9 +68,19 @@ export const userSettingsService = {
               updated_at: newData.updated_at,
             };
           }
+          // If table doesn't exist, return default
+          if (directError.code === '42P01' || directError.message?.includes('does not exist')) {
+            console.warn('user_settings table does not exist. Please run database/user_settings.sql');
+            return {
+              id: 'temp',
+              user_id: user.id,
+              monthly_budget: 600.00,
+            };
+          }
           throw directError;
         }
 
+        console.log('✅ Loaded existing settings:', directData);
         return {
           id: directData.id,
           user_id: directData.user_id,

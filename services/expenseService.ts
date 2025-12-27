@@ -11,6 +11,7 @@ export const expenseService = {
         throw new Error('User not authenticated');
       }
 
+      console.log('🔍 Fetching expenses for user:', user.id);
       const { data, error } = await supabase
         .from('expenses')
         .select('*')
@@ -19,10 +20,18 @@ export const expenseService = {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching expenses:', error);
+        console.error('❌ Error fetching expenses:', error);
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
         throw error;
       }
 
+      console.log(`✅ Fetched ${data?.length || 0} expenses from database`);
+      
       // Transform database format to Expense type
       return (data || []).map((expense: any) => ({
         id: expense.id,
@@ -102,6 +111,7 @@ export const expenseService = {
         throw new Error('Date is required');
       }
 
+      console.log('💾 Adding expense:', { amount, category, date, note });
       const { data, error } = await supabase
         .from('expenses')
         .insert({
@@ -115,9 +125,17 @@ export const expenseService = {
         .single();
 
       if (error) {
-        console.error('Error adding expense:', error);
+        console.error('❌ Error adding expense:', error);
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
         throw error;
       }
+
+      console.log('✅ Expense added successfully:', data);
 
       return {
         id: data.id,

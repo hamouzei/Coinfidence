@@ -16,7 +16,7 @@ import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import EmailVerification from "./pages/EmailVerification";
 import { Expense, Category, User } from "./types";
-import { authHelpers } from "./services/supabase";
+import { authHelpers, supabase } from "./services/supabase";
 import { expenseService } from "./services/expenseService";
 import { userSettingsService } from "./services/userSettingsService";
 
@@ -49,7 +49,7 @@ const AppContent: React.FC = () => {
 
         if (session?.user) {
           const supabaseUser = session.user;
-          setUser({
+          const newUser = {
             email: supabaseUser.email || "",
             name:
               supabaseUser.user_metadata?.name ||
@@ -60,10 +60,24 @@ const AppContent: React.FC = () => {
               supabaseUser.user_metadata?.avatar_url ||
               "https://ui-avatars.com/api/?name=" +
                 encodeURIComponent(supabaseUser.email?.split("@")[0] || "User"),
-          });
+          };
+          setUser(newUser);
           // Fetch expenses and settings for logged-in user
-          loadExpenses();
-          loadUserSettings();
+          // Load settings first, then expenses
+          const loadData = async () => {
+            try {
+              const settings = await userSettingsService.getSettings();
+              setMonthlyBudget(settings.monthly_budget);
+              setUser({ ...newUser, monthlyBudget: settings.monthly_budget });
+            } catch (error: any) {
+              console.error("Error loading user settings:", error);
+              setMonthlyBudget(600);
+              setUser({ ...newUser, monthlyBudget: 600 });
+            }
+            // Load expenses after settings
+            loadExpenses();
+          };
+          loadData();
         }
       } catch (error) {
         console.error("Error checking session:", error);
@@ -80,7 +94,7 @@ const AppContent: React.FC = () => {
     } = authHelpers.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         const supabaseUser = session.user;
-        setUser({
+        const newUser = {
           email: supabaseUser.email || "",
           name:
             supabaseUser.user_metadata?.name ||
@@ -91,10 +105,22 @@ const AppContent: React.FC = () => {
             supabaseUser.user_metadata?.avatar_url ||
             "https://ui-avatars.com/api/?name=" +
               encodeURIComponent(supabaseUser.email?.split("@")[0] || "User"),
-        });
-        // Fetch expenses and settings when user signs in
-        loadExpenses();
-        loadUserSettings();
+        };
+        setUser(newUser);
+        // Fetch settings first, then expenses
+        const loadData = async () => {
+          try {
+            const settings = await userSettingsService.getSettings();
+            setMonthlyBudget(settings.monthly_budget);
+            setUser({ ...newUser, monthlyBudget: settings.monthly_budget });
+          } catch (error: any) {
+            console.error("Error loading user settings:", error);
+            setMonthlyBudget(600);
+            setUser({ ...newUser, monthlyBudget: 600 });
+          }
+          loadExpenses();
+        };
+        loadData();
       } else if (event === "SIGNED_OUT") {
         setUser(null);
         setExpenses([]); // Clear expenses on logout
@@ -125,31 +151,63 @@ const AppContent: React.FC = () => {
   const loadUserSettings = async () => {
     try {
       const settings = await userSettingsService.getSettings();
+      console.log('✅ Loaded user settings:', settings);
       setMonthlyBudget(settings.monthly_budget);
       if (user) {
         setUser({ ...user, monthlyBudget: settings.monthly_budget });
       }
     } catch (error: any) {
-      console.error("Error loading user settings:", error);
+      console.error("❌ Error loading user settings:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
       // Use default budget if settings can't be loaded
       setMonthlyBudget(600);
+      if (user) {
+        setUser({ ...user, monthlyBudget: 600 });
+      }
     }
   };
 
   // Load expenses from Supabase
   const loadExpenses = async () => {
-    if (!user) return;
+    // Check if user is authenticated (don't rely on user state)
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) {
+      console.log('⚠️ Cannot load expenses: user not authenticated');
+      return;
+    }
     
     setIsLoadingExpenses(true);
     try {
+      console.log('🔄 Loading expenses...');
       const fetchedExpenses = await expenseService.fetchExpenses();
+      console.log(`✅ Loaded ${fetchedExpenses.length} expenses:`, fetchedExpenses);
       setExpenses(fetchedExpenses);
     } catch (error: any) {
-      console.error("Error loading expenses:", error);
-      showToast(
-        error.message || "Failed to load expenses. Please try again.",
-        "error"
-      );
+      console.error("❌ Error loading expenses:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      
+      // Check if expenses table exists
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        showToast(
+          "Expenses table not found. Please run database/schema.sql in Supabase.",
+          "error"
+        );
+      } else {
+        showToast(
+          error.message || "Failed to load expenses. Please try again.",
+          "error"
+        );
+      }
     } finally {
       setIsLoadingExpenses(false);
     }
@@ -241,9 +299,20 @@ const AppContent: React.FC = () => {
       )}`,
     });
     showToast("Welcome back!", "success");
-    // Load expenses and settings after login
-    loadExpenses();
-    loadUserSettings();
+    // Load settings first, then expenses
+    const loadData = async () => {
+      try {
+        const settings = await userSettingsService.getSettings();
+        setMonthlyBudget(settings.monthly_budget);
+        setUser({ ...user, monthlyBudget: settings.monthly_budget });
+      } catch (error: any) {
+        console.error("Error loading user settings:", error);
+        setMonthlyBudget(600);
+        setUser({ ...user, monthlyBudget: 600 });
+      }
+      loadExpenses();
+    };
+    loadData();
   };
 
   const handleLogout = async () => {
