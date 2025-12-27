@@ -147,6 +147,25 @@ const AppContent: React.FC = () => {
     };
   }, []);
 
+  // Global keyboard shortcuts
+  useEffect(() => {
+    if (!user) return; // Only enable shortcuts when logged in
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + K to open add expense modal (when not in input/textarea)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k' && !isModalOpen) {
+        const target = e.target as HTMLElement;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && !target.isContentEditable) {
+          e.preventDefault();
+          openAddModal();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen, user]);
+
   // Load user settings (budget)
   const loadUserSettings = async () => {
     try {

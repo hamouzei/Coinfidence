@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { userSettingsService } from '../services/userSettingsService';
+import { darkMode } from '../utils/darkMode';
 
 interface ProfileProps {
   user: User;
@@ -14,10 +15,34 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, onBudgetUpdate }) => 
   const [isEditingBudget, setIsEditingBudget] = useState(false);
   const [isSavingBudget, setIsSavingBudget] = useState(false);
   const [budgetError, setBudgetError] = useState<string>('');
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(darkMode.getTheme());
 
   useEffect(() => {
     setBudget((user.monthlyBudget || 600).toString());
   }, [user.monthlyBudget]);
+
+  useEffect(() => {
+    // Update theme state when it changes
+    const updateTheme = () => {
+      setCurrentTheme(darkMode.getTheme());
+    };
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    
+    updateTheme();
+    
+    return () => observer.disconnect();
+  }, []);
+
+  const handleToggleTheme = () => {
+    const newTheme = darkMode.toggle();
+    setCurrentTheme(newTheme);
+  };
 
   const handleSaveBudget = async () => {
     const numBudget = parseFloat(budget);
@@ -167,6 +192,48 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, onBudgetUpdate }) => 
                   </span>
                 </div>
               )}
+            </div>
+
+            <div className="w-full h-px bg-[#f0f2f4] dark:bg-gray-700"></div>
+
+            {/* Dark Mode Toggle */}
+            <div className="w-full flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <h3 className="text-[#111418] dark:text-white text-base font-bold">Appearance</h3>
+                  <p className="text-[#617589] dark:text-gray-400 text-sm">Choose your preferred theme</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-[#f0f2f4] dark:bg-gray-800 border border-transparent hover:border-[#dbe0e6] dark:hover:border-gray-700 transition-colors">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-[#617589] dark:text-gray-400 text-[20px]">
+                    {currentTheme === 'dark' ? 'dark_mode' : 'light_mode'}
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-[#111418] dark:text-white text-sm font-semibold">
+                      {currentTheme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                    </span>
+                    <span className="text-[#617589] dark:text-gray-400 text-xs">
+                      {currentTheme === 'dark' ? 'Dark theme is active' : 'Light theme is active'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleToggleTheme}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 ${
+                    currentTheme === 'dark' ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'
+                  }`}
+                  role="switch"
+                  aria-checked={currentTheme === 'dark'}
+                  aria-label="Toggle dark mode"
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      currentTheme === 'dark' ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
 
             <div className="w-full h-px bg-[#f0f2f4] dark:bg-gray-700"></div>

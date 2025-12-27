@@ -2,6 +2,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { darkMode } from './utils/darkMode';
+
+// Initialize dark mode before rendering
+darkMode.init();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

@@ -98,7 +98,7 @@ const History: React.FC<HistoryProps> = ({ expenses, onAddExpense, onEditExpense
                 return (
                   <div
                     key={e.id}
-                    className="group relative flex items-center justify-between gap-4 rounded-xl bg-white dark:bg-[#1a2632] p-4 shadow-sm border border-transparent hover:border-primary/20 transition-all duration-200"
+                    className="group relative flex items-center justify-between gap-4 rounded-xl bg-white dark:bg-[#1a2632] p-4 shadow-sm border border-transparent hover:border-primary/20 hover:shadow-md transition-all duration-200 animate-in fade-in slide-in-from-left-2"
                     onMouseEnter={() => setHoveredExpense(e.id)}
                     onMouseLeave={() => setHoveredExpense(null)}
                   >

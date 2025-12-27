@@ -27,7 +27,17 @@ export const expenseService = {
           details: error.details,
           hint: error.hint,
         });
-        throw error;
+        
+        // User-friendly error messages
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          throw new Error('Expenses table not found. Please run database/schema.sql in Supabase.');
+        } else if (error.code === '42501') {
+          throw new Error('Permission denied. Please check your account permissions.');
+        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+          throw new Error('Network error. Please check your internet connection and try again.');
+        }
+        
+        throw new Error(error.message || 'Failed to load expenses. Please try again.');
       }
 
       console.log(`✅ Fetched ${data?.length || 0} expenses from database`);
@@ -132,7 +142,19 @@ export const expenseService = {
           details: error.details,
           hint: error.hint,
         });
-        throw error;
+        
+        // User-friendly error messages
+        if (error.code === '42P01' || error.message?.includes('does not exist')) {
+          throw new Error('Expenses table not found. Please run database/schema.sql in Supabase.');
+        } else if (error.code === '23505') {
+          throw new Error('This expense already exists.');
+        } else if (error.code === '42501') {
+          throw new Error('Permission denied. Please check your account permissions.');
+        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+          throw new Error('Network error. Please check your internet connection and try again.');
+        }
+        
+        throw new Error(error.message || 'Failed to add expense. Please try again.');
       }
 
       console.log('✅ Expense added successfully:', data);

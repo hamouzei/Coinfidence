@@ -16,9 +16,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   onAction,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4">
-      <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-        <span className="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-600">
+    <div className="flex flex-col items-center justify-center py-12 px-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 transition-all hover:scale-110 hover:bg-slate-200 dark:hover:bg-slate-700">
+        <span className="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-600 animate-pulse">
           {icon}
         </span>
       </div>
@@ -29,7 +29,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       {actionLabel && onAction && (
         <button
           onClick={onAction}
-          className="px-6 py-3 bg-primary hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors shadow-sm"
+          className="px-6 py-3 bg-primary hover:bg-blue-600 text-white font-semibold rounded-xl transition-all shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
+          aria-label={actionLabel}
         >
           {actionLabel}
         </button>

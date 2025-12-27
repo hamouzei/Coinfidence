@@ -31,12 +31,16 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose, duration = 3000 }
   };
 
   return (
-    <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg backdrop-blur-sm animate-in slide-in-from-top-4 fade-in ${typeStyles[type]}`}>
-      <span className="material-symbols-outlined text-xl">{icons[type]}</span>
-      <p className="text-sm font-semibold flex-1">{message}</p>
+    <div 
+      className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg backdrop-blur-sm animate-in slide-in-from-top-4 fade-in duration-300 ${typeStyles[type]}`}
+      role="alert"
+      aria-live="polite"
+    >
+      <span className="material-symbols-outlined text-xl flex-shrink-0">{icons[type]}</span>
+      <p className="text-sm font-semibold flex-1 min-w-0">{message}</p>
       <button
         onClick={onClose}
-        className="text-current opacity-70 hover:opacity-100 transition-opacity"
+        className="text-current opacity-70 hover:opacity-100 transition-opacity flex-shrink-0"
         aria-label="Close notification"
       >
         <span className="material-symbols-outlined text-lg">close</span>

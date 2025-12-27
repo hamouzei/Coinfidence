@@ -93,17 +93,34 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ onClose, onSave, onDelete, 
   const noteLength = note.length;
   const maxNoteLength = 200;
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isSaving && !isDeleting) {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [onClose, isSaving, isDeleting]);
+
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
         <div
-          className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
           onClick={onClose}
           aria-hidden="true"
         />
-        <div className="relative z-50 w-full max-w-[450px] bg-white dark:bg-[#1A2633] rounded-2xl shadow-2xl overflow-hidden flex flex-col transform transition-all animate-in fade-in zoom-in duration-200">
+        <div 
+          className="relative z-50 w-full max-w-[450px] bg-white dark:bg-[#1A2633] rounded-2xl shadow-2xl overflow-hidden flex flex-col transform transition-all animate-in fade-in zoom-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="expense-modal-title"
+        >
           <div className="flex items-center justify-between px-6 pt-6 pb-2">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+            <h2 id="expense-modal-title" className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
               {isEditMode ? 'Edit Expense' : 'Add New Expense'}
             </h2>
             <div className="flex items-center gap-2">

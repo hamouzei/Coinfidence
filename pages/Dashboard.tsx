@@ -138,7 +138,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
           <LoadingSkeleton />
           <LoadingSkeleton />
           <LoadingSkeleton />
@@ -159,18 +159,18 @@ const Dashboard: React.FC<DashboardProps> = ({
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 gap-3">
-            {topSpending.map((item) => {
+        <div className="grid grid-cols-1 gap-3">
+          {topSpending.map((item) => {
               const styles =
                 categoryIcons[item.name] || categoryIcons[Category.OTHER];
               const percent =
                 totalSpent > 0
                   ? Math.round((item.amount / totalSpent) * 100)
                   : 0;
-              return (
+            return (
                 <div
                   key={item.name}
-                  className="flex items-center gap-4 bg-white dark:bg-[#1A2633] p-4 rounded-xl border border-[#dbe0e6] dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer group"
+                  className="flex items-center gap-4 bg-white dark:bg-[#1A2633] p-4 rounded-xl border border-[#dbe0e6] dark:border-gray-700 hover:shadow-md hover:scale-[1.02] transition-all duration-200 cursor-pointer group animate-in fade-in slide-in-from-bottom-2"
                 >
                   <div
                     className={`flex items-center justify-center rounded-lg ${styles.bg} ${styles.text} shrink-0 size-12`}
@@ -178,17 +178,17 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <span className="material-symbols-outlined">
                       {styles.icon}
                     </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-1">
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-1">
                       <p className="text-[#111418] dark:text-white text-base font-bold truncate">
                         {item.name}
                       </p>
                       <p className="text-[#111418] dark:text-white text-base font-bold">
                         ${item.amount.toFixed(2)}
                       </p>
-                    </div>
-                    <div className="w-full bg-[#f0f2f4] dark:bg-gray-700 rounded-full h-1.5">
+                  </div>
+                  <div className="w-full bg-[#f0f2f4] dark:bg-gray-700 rounded-full h-1.5">
                       <div
                         className="h-1.5 rounded-full"
                         style={{
@@ -204,13 +204,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                             : "#94a3b8",
                         }}
                       ></div>
-                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
+      </div>
       )}
     </div>
   );
