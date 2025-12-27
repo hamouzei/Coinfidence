@@ -17,7 +17,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
               <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd"></path>
             </svg>
           </div>
-          <h2 className="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">StudentTracker</h2>
+          <h2 className="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Coinfidence</h2>
         </div>
       </header>
 
@@ -56,7 +56,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout }) => {
           </div>
 
           <div className="flex justify-center">
-            <p className="text-[#617589] dark:text-gray-500 text-xs font-normal leading-normal">StudentTracker v1.0.4</p>
+            <p className="text-[#617589] dark:text-gray-500 text-xs font-normal leading-normal">Coinfidence v1.0.0</p>
           </div>
         </div>
       </main>

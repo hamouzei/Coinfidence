@@ -19,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user }) => {
             className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 shrink-0" 
             style={{ backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuDtKQEyHmMOUuVzGRcfW-jnYR_rIr5CGiKJ9yS5ZOQpP_d9avVanJ5D0ncbZVIdY-xFEja-zGkIa5qjhgOWafTu5_rjtn1ZzL87gIX_nH1fxPCpG6Unvs_X2j80tCisEN0xgKeAYaHAEzD3JNh6tRtE2lU2q_u83CuqAyx0LsEx6lbo8W9JStCXIAlt1prIpaTgaA9SYDPORXUGYxs1jbd93P3OLmtxpNl1SsB31BjOLUfEBaA_KgkIG8UlpSMQ7sXqUd6weqC-UYeS")` }}
           />
-          <h1 className="text-[#111418] dark:text-white text-lg font-bold leading-normal tracking-tight">ExpenseTracker</h1>
+          <h1 className="text-[#111418] dark:text-white text-lg font-bold leading-normal tracking-tight">Coinfidence</h1>
         </div>
 
         <nav className="flex flex-col gap-2 mt-4">

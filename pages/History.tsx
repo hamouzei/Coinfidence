@@ -1,19 +1,23 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Expense, Category } from '../types';
+import { formatDate } from '../utils/dateFormatter';
 
 interface HistoryProps {
   expenses: Expense[];
   onAddExpense: () => void;
+  onEditExpense?: (expense: Expense) => void;
+  onDeleteExpense?: (id: string) => void;
 }
 
-const History: React.FC<HistoryProps> = ({ expenses, onAddExpense }) => {
+const History: React.FC<HistoryProps> = ({ expenses, onAddExpense, onEditExpense, onDeleteExpense }) => {
+  const [hoveredExpense, setHoveredExpense] = useState<string | null>(null);
+
   const groupedExpenses = useMemo(() => {
     const sorted = [...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const groups: Record<string, Expense[]> = {};
-    sorted.forEach(e => {
-      const d = new Date(e.date);
-      const label = d.toDateString() === new Date().toDateString() ? 'Today' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    sorted.forEach((e) => {
+      const label = formatDate(e.date);
       if (!groups[label]) groups[label] = [];
       groups[label].push(e);
     });
@@ -72,19 +76,55 @@ const History: React.FC<HistoryProps> = ({ expenses, onAddExpense }) => {
             <div className="flex flex-col gap-3">
               {items.map((e) => {
                 const styles = categoryIcons[e.category] || categoryIcons[Category.OTHER];
+                const isHovered = hoveredExpense === e.id;
                 return (
-                  <div key={e.id} className="group relative flex items-center justify-between gap-4 rounded-xl bg-white dark:bg-[#1a2632] p-4 shadow-sm border border-transparent hover:border-primary/20 transition-all duration-200">
+                  <div
+                    key={e.id}
+                    className="group relative flex items-center justify-between gap-4 rounded-xl bg-white dark:bg-[#1a2632] p-4 shadow-sm border border-transparent hover:border-primary/20 transition-all duration-200"
+                    onMouseEnter={() => setHoveredExpense(e.id)}
+                    onMouseLeave={() => setHoveredExpense(null)}
+                  >
                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${styles.bg} ${styles.text}`}>
+                      <div
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${styles.bg} ${styles.text}`}
+                      >
                         <span className="material-symbols-outlined">{styles.icon}</span>
                       </div>
                       <div className="flex flex-col justify-center min-w-0">
-                        <p className="text-base font-semibold leading-tight truncate dark:text-white">{e.note || e.category}</p>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm leading-normal truncate">{e.category}</p>
+                        <p className="text-base font-semibold leading-tight truncate dark:text-white">
+                          {e.note || e.category}
+                        </p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm leading-normal truncate">
+                          {e.category}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <p className="text-base font-bold text-[#111418] dark:text-white">${e.amount.toFixed(2)}</p>
+                      <p className="text-base font-bold text-[#111418] dark:text-white">
+                        ${e.amount.toFixed(2)}
+                      </p>
+                      {(isHovered || onEditExpense || onDeleteExpense) && (
+                        <div className="flex items-center gap-2">
+                          {onEditExpense && (
+                            <button
+                              onClick={() => onEditExpense(e)}
+                              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
+                              aria-label="Edit expense"
+                            >
+                              <span className="material-symbols-outlined text-[20px]">edit</span>
+                            </button>
+                          )}
+                          {onDeleteExpense && (
+                            <button
+                              onClick={() => onDeleteExpense(e.id)}
+                              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              aria-label="Delete expense"
+                            >
+                              <span className="material-symbols-outlined text-[20px]">delete</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -94,11 +134,22 @@ const History: React.FC<HistoryProps> = ({ expenses, onAddExpense }) => {
         ))}
 
         {expenses.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-10 opacity-60">
-            <div className="w-32 h-32 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-4xl text-gray-400 dark:text-gray-600">checklist</span>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-32 h-32 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-4xl text-slate-400 dark:text-slate-600">
+                checklist
+              </span>
             </div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">You're all caught up!</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No expenses yet</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-6 max-w-sm">
+              Start tracking today to see your spending history here.
+            </p>
+            <button
+              onClick={onAddExpense}
+              className="px-6 py-3 bg-primary hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors shadow-sm"
+            >
+              Add Your First Expense
+            </button>
           </div>
         )}
       </main>
